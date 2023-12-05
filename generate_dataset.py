@@ -1,26 +1,49 @@
+from pathlib import Path
+import argparse
+
 import requests
 import json
-from urllib.parse import quote_plus
-import io
-from bs4 import BeautifulSoup
-from pathlib import Path
+import tqdm
 
-dataset_url = "https://datasets-server.huggingface.co/rows?dataset=c4&config=en&split=train&offset=0&length=100"
+
+def get_dataset_url(offset):
+    # URL for getting rows offset (inclusive) to offset + 100 (not inclusive) in the c4 dataset
+    return f"https://datasets-server.huggingface.co/rows?dataset=c4&config=en&split=train&offset={offset}&length=100"
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-n", help="specify number of rows from dataset", type=int, default=100
+    )
+    return parser.parse_args()
 
 
 def main():
-    dataset_path = Path("dataset.json")
+    args = get_args()
+    dataset_path = Path(f"dataset{args.n}.json")
+
     if dataset_path.exists():
         print("Dataset already exists")
         return
     else:
         print("Dataset does not exist")
-        response = requests.get(dataset_url)
-        c4 = response.json()
 
-        dataset_path.touch()
+        rows = []
+
         with open(dataset_path, "w") as f:
-            json.dump(c4, f)
+            for i in tqdm.tqdm(range(0, args.n, 100)):
+                dataset_url = get_dataset_url(i)
+                response = requests.get(dataset_url)
+                c4 = response.json()
+
+                for row in c4["rows"]:
+                    text = row["row"]["text"]
+                    url = row["row"]["url"]
+                    rows.append([text, url])
+
+            json.dump({"rows": rows}, f)
+            print("Dataset created")
 
 
 if __name__ == "__main__":
