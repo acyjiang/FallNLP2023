@@ -3,7 +3,9 @@ from pathlib import Path
 import argparse
 
 from noise_tools import noise_algorithm
-from model.model import DenoiseModel
+
+# from model.model import DenoiseModel
+import datasets
 
 
 def get_args():
@@ -19,15 +21,16 @@ def read_clean_dataset(n):
 
     if dataset_path.exists():
         with open(dataset_path, "r") as f:
-            c4 = json.load(f)
-            rows = c4["rows"]
+            dataset = datasets.load_dataset("json", data_files=f"dataset{n}.json")
+        return dataset
+    else:
+        print("Dataset does not exist")
+        return
 
-            text = [row[0] for row in rows]
-            print(text)
 
-
-def generate_noisy_dataset(data):
-    return [noise_algorithm(text) for text in data]
+def add_noise(data):
+    data["noisy"] = noise_algorithm(data["clean"])
+    return data
 
 
 def main():
@@ -35,9 +38,17 @@ def main():
 
     clean_original_dataset = read_clean_dataset(args.n)
 
-    noisy_dataset = generate_noisy_dataset(clean_original_dataset)
+    full_dataset = clean_original_dataset.map(add_noise)
 
-    model = DenoiseModel()
+    print(clean_original_dataset)
+    print(full_dataset)
+
+    # model = DenoiseModel()
+
+    # model.train(dataset)
+
+    # # Results
+    # denoised_data = [model(text) for text in noisy_data]
 
 
 if __name__ == "__main__":
