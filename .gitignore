@@ -1,2 +1,6 @@
 dataset*.json
 test.py
+
+__pycache__/
+
+model/__pycache__/
