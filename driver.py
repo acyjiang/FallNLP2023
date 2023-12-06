@@ -4,7 +4,7 @@ import argparse
 
 from noise_tools import noise_algorithm
 
-# from model.model import DenoiseModel
+from model.model import DenoiseModel
 import datasets
 
 
@@ -21,7 +21,9 @@ def read_clean_dataset(n):
 
     if dataset_path.exists():
         with open(dataset_path, "r") as f:
-            dataset = datasets.load_dataset("json", data_files=f"dataset{n}.json")
+            dataset = datasets.load_dataset(
+                "json", data_files=f"dataset{n}.json", split="train"
+            )
         return dataset
     else:
         print("Dataset does not exist")
@@ -33,6 +35,24 @@ def add_noise(data):
     return data
 
 
+def get_data_splits(dataset):
+    split = 0.15
+
+    train_test_split = dataset.train_test_split(test_size=split)
+
+    train_val_data = train_test_split["train"]
+
+    train_val_split = train_val_data.train_test_split(test_size=split / (1 - split))
+
+    train_data = train_val_split["train"]
+
+    val_data = train_val_split["test"]
+
+    test_data = train_test_split["test"]
+
+    return train_data, val_data, test_data
+
+
 def main():
     args = get_args()
 
@@ -40,15 +60,18 @@ def main():
 
     full_dataset = clean_original_dataset.map(add_noise)
 
-    print(clean_original_dataset)
-    print(full_dataset)
+    train_data, val_data, test_data = get_data_splits(full_dataset)
 
-    # model = DenoiseModel()
+    print(train_data, val_data, test_data)
 
-    # model.train(dataset)
+    model = DenoiseModel()
+
+    model.train(train_data, val_data)
 
     # # Results
     # denoised_data = [model(text) for text in noisy_data]
+
+    dummy_bert2bert = model.from_pretrained("./checkpoint-20")
 
 
 if __name__ == "__main__":
