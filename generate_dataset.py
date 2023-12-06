@@ -34,13 +34,17 @@ def main():
             for i in tqdm.tqdm(range(0, args.n, 100)):
                 dataset_url = get_dataset_url(i)
                 response = requests.get(dataset_url)
+                while response.status_code != 200:
+                    print("Trying again...")
+                    response = requests.get(dataset_url)
                 c4 = response.json()
 
                 for row in c4["rows"]:
                     text = row["row"]["text"]
                     rows.append(text)
+                    json.dump({"clean": text}, f)
+                    f.write("\n")
 
-            json.dump({"rows": rows}, f)
             print("Dataset created")
 
 
