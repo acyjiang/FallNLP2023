@@ -38,8 +38,7 @@ def main():
 
                 for row in c4["rows"]:
                     text = row["row"]["text"]
-                    url = row["row"]["url"]
-                    rows.append((text, url))
+                    rows.append(text)
 
             json.dump({"rows": rows}, f)
             print("Dataset created")
