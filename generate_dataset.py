@@ -29,9 +29,8 @@ def main():
     else:
         print("Dataset does not exist")
 
-        rows = []
-
         with open(dataset_path, "w") as f:
+            rows = []
             for i in tqdm.tqdm(range(0, args.n, 100)):
                 dataset_url = get_dataset_url(i)
                 response = requests.get(dataset_url)
@@ -40,7 +39,7 @@ def main():
                 for row in c4["rows"]:
                     text = row["row"]["text"]
                     url = row["row"]["url"]
-                    rows.append([text, url])
+                    rows.append((text, url))
 
             json.dump({"rows": rows}, f)
             print("Dataset created")
