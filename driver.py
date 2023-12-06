@@ -2,7 +2,8 @@ import json
 from pathlib import Path
 import argparse
 
-import noise_tools
+from noise_tools import noise_algorithm
+from model.model import DenoiseModel
 
 
 def get_args():
@@ -26,11 +27,7 @@ def read_clean_dataset(n):
 
 
 def generate_noisy_dataset(data):
-    return data
-
-
-def denoise_noisy_dataset(data):
-    return data
+    return [noise_algorithm(text) for text in data]
 
 
 def main():
@@ -40,7 +37,7 @@ def main():
 
     noisy_dataset = generate_noisy_dataset(clean_original_dataset)
 
-    clean_denoised_dataset = denoise_noisy_dataset(noisy_dataset)
+    model = DenoiseModel()
 
 
 if __name__ == "__main__":
