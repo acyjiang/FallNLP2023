@@ -4,7 +4,7 @@ import argparse
 
 from noise_tools import noise_algorithm
 
-# from model.model import DenoiseModel
+from model.model import DenoiseModel
 import datasets
 
 
@@ -43,7 +43,6 @@ def main():
     print(clean_original_dataset)
     print(full_dataset)
 
-    # model = DenoiseModel()
 
     # model.train(dataset)
 
