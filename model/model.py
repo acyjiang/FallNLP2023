@@ -73,3 +73,5 @@ trainer = Seq2SeqTrainer(
     eval_dataset=val_data,
 )
 trainer.train()
+
+dummy_bert2bert = EncoderDecoderModel.from_pretrained("./checkpoint-20")
