@@ -4,38 +4,74 @@ import datasets
 
 class DenoiseModel:
 
-    def __init__(self, data):
-        self.data = data
-        self.tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
-        print("Model instantiated")
+    def __init__(self, train_data, val_data, batch_size=16, enc_model="bert-base-uncased", dec_model="bert-base-uncased"):
         
-    def configure_model(self):
-        bert2bert = EncoderDecoderModel.from_encoder_decoder_pretrained(
-            "bert-base-uncased", "bert-base-uncased"
+        self.batch_size = batch_size
+        self.tokenizer = BertTokenizerFast.from_pretrained(enc_model)
+        self.train_data = self._tokenize_and_preprocess_data(train_data)
+        self.val_data = self._tokenize_and_preprocess_data(val_data)
+        self._configure_model(enc_model, dec_model)
+        self._configure_trainer()
+        print("Model instantiated")
+
+    def _tokenize_and_preprocess_data(self, raw_data, max_len=512):
+        #Current solution is to truncate data
+        #Might need to find smarter solution but it should be fine for now
+        def tokenize_map(batch):
+            inputs = self.tokenizer(batch["noisy"], padding="max_length", truncation=True, max_length=max_len)
+            outputs = self.tokenizer(batch["clean"], padding="max_length", truncation=True, max_length=max_len)
+
+            batch["input_ids"] = inputs.input_ids
+            batch["attention_mask"] = inputs.attention_mask
+            batch["decoder_input_ids"] = outputs.input_ids
+            batch["decoder_attention_mask"] = outputs.attention_mask
+            batch["labels"] = outputs.input_ids.copy()
+
+            # because BERT automatically shifts the labels, the labels correspond exactly to `decoder_input_ids`.
+            # We have to make sure that the PAD token is ignored
+            batch["labels"] = [[-100 if token == self.tokenizer.pad_token_id else token for token in labels] for labels in batch["labels"]]
+
+            return batch
+        
+        transformed_data = raw_data.map(
+            tokenize_map,
+            batched=True,
+            batch_size=self.batch_size,
+            remove_columns=["clean", "noisy"]
         )
 
-        bert2bert.config.decoder_start_token_id = tokenizer.cls_token_id
-        bert2bert.config.eos_token_id = tokenizer.sep_token_id
-        bert2bert.config.pad_token_id = tokenizer.pad_token_id
-        bert2bert.config.vocab_size = bert2bert.config.encoder.vocab_size
+        transformed_data.set_format(
+            type="torch", columns=["input_ids", "attention_mask", "decoder_input_ids", "decoder_attention_mask", "labels"],
+        )
 
-        bert2bert.config.max_length = 142
-        bert2bert.config.min_length = 56
-        bert2bert.config.no_repeat_ngram_size = 3
-        bert2bert.config.early_stopping = True
-        bert2bert.config.length_penalty = 2.0
-        bert2bert.config.num_beams = 4
+        return transformed_data
+        
+    def _configure_model(self, enc_model, dec_model):
+        enc_dec_model = EncoderDecoderModel.from_encoder_decoder_pretrained(
+            enc_model, dec_model
+        )
 
-        self.bert2bert = bert2bert
+        enc_dec_model.config.decoder_start_token_id = self.tokenizer.cls_token_id
+        enc_dec_model.config.eos_token_id = self.tokenizer.sep_token_id
+        enc_dec_model.config.pad_token_id = self.tokenizer.pad_token_id
+        enc_dec_model.config.vocab_size = enc_dec_model.config.encoder.vocab_size
 
-    def configure_trainer(self):
-        batch_size = 4
+        enc_dec_model.config.max_length = 142
+        enc_dec_model.config.min_length = 56
+        enc_dec_model.config.no_repeat_ngram_size = 3
+        enc_dec_model.config.early_stopping = True
+        enc_dec_model.config.length_penalty = 2.0
+        enc_dec_model.config.num_beams = 4
+
+        self.enc_dec_model = enc_dec_model
+
+    def _configure_trainer(self):
 
         training_args = Seq2SeqTrainingArguments(
             predict_with_generate=True,
             evaluation_strategy="steps",
-            per_device_train_batch_size=batch_size,
-            per_device_eval_batch_size=batch_size,
+            per_device_train_batch_size=self.batch_size,
+            per_device_eval_batch_size=self.batch_size,
             fp16=True,
             output_dir="./",
             logging_steps=2,
@@ -49,14 +85,17 @@ class DenoiseModel:
         )
 
         trainer = Seq2SeqTrainer(
-            model=bert2bert,
+            model=self.enc_dec_model,
             args=training_args,
-            compute_metrics=compute_metrics,
-            train_dataset=train_data,
-            eval_dataset=val_data,
+            # compute_metrics=compute_metrics, Can add back metrics later if needed
+            train_dataset=self.train_data,
+            eval_dataset=self.val_data,
         )
 
         self.trainer = trainer
+
+    def train(self):
+        self.trainer.train()
 
     def examine_lengths(self):
 

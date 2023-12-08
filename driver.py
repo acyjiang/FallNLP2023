@@ -63,9 +63,9 @@ def main():
     train_data, val_data, test_data = get_data_splits(full_dataset)
 
 
-    model = DenoiseModel()
+    model = DenoiseModel(train_data, val_data)
 
-    model.train(train_data, val_data)
+    model.train()
 
     # # Results
     # denoised_data = [model(text) for text in noisy_data]
