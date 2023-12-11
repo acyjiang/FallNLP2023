@@ -63,14 +63,14 @@ def main():
     train_data, val_data, test_data = get_data_splits(full_dataset)
 
 
-    model = DenoiseModel(train_data, val_data)
+    model = DenoiseModel(train_data, val_data, batch_size=4)
 
     model.train()
 
     # # Results
     # denoised_data = [model(text) for text in noisy_data]
 
-    dummy_bert2bert = model.from_pretrained("./checkpoint-20")
+    # dummy_bert2bert = model.from_pretrained("./checkpoint-20")
 
 
 if __name__ == "__main__":

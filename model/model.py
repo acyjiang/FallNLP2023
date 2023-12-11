@@ -75,7 +75,7 @@ class DenoiseModel:
             fp16=True,
             output_dir="./",
             logging_steps=2,
-            save_steps=10,
+            save_steps=100,
             eval_steps=4,
             # logging_steps=1000,
             # save_steps=500,
