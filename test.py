@@ -1,7 +1,14 @@
 import datasets
 from transformers import EncoderDecoderModel, BertTokenizer
 
+from noise_tools import noise_algorithm
+
+def add_noise(data):
+    data["article"] = noise_algorithm(data["article"])
+    return data
+
 test_data = datasets.load_dataset("cnn_dailymail", "3.0.0", split="test[:16]")
+test_data_noisy = test_data.map(add_noise)
 rouge = datasets.load_metric("rouge")
 
 bert2bert = EncoderDecoderModel.from_pretrained("patrickvonplaten/bert2bert_cnn_daily_mail").to("cuda")
@@ -22,4 +29,8 @@ def generate_summary(batch):
     return batch
 
 results = test_data.map(generate_summary, batched=True, batch_size=16, remove_columns=["article"])
-print(rouge.compute(predictions=results["pred_summary"], references=results["highlights"], rouge_types=["rouge1", "rouge2", "rougeL"]))
+results_noisy = test_data_noisy.map(generate_summary, batched=True, batch_size=16, remove_columns=["article"])
+
+print(results[:]["pred_summary"])
+print(results[:]["highlights"])
+print(results_noisy[:]["pred_summary"])
