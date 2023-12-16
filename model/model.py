@@ -74,13 +74,13 @@ class DenoiseModel:
             per_device_eval_batch_size=self.batch_size,
             fp16=True,
             output_dir="./",
-            logging_steps=2,
-            save_steps=100,
-            eval_steps=4,
-            # logging_steps=1000,
-            # save_steps=500,
-            # eval_steps=7500,
-            # warmup_steps=2000,
+            # logging_steps=2,
+            # save_steps=100,
+            # eval_steps=4,
+            logging_steps=1000,
+            save_steps=500,
+            eval_steps=7500,
+            warmup_steps=2000
             # save_total_limit=3,
         )
 
