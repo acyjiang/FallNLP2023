@@ -7,7 +7,7 @@ from noise_tools import noise_algorithm
 
 import datasets
 
-from transformers import EncoderDecoderModel, BertTokenizerFast
+from transformers import EncoderDecoderModel, BertTokenizer
 
 
 def get_args():
@@ -34,7 +34,7 @@ def main():
     test_data = test_data.map(add_noise)
 
     denoiser = EncoderDecoderModel.from_pretrained(args.path).to("cuda")
-    tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     summarizer = EncoderDecoderModel.from_pretrained("patrickvonplaten/bert2bert_cnn_daily_mail").to("cuda") 
 
     def generate_summary(batch):

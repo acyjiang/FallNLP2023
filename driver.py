@@ -13,6 +13,9 @@ def get_args():
     parser.add_argument(
         "-n", help="specify number of rows from dataset to use", type=int, default=100
     )
+    parser.add_argument(
+        "-b", help="batch size", type=int, default=16
+    )
     return parser.parse_args()
 
 
@@ -63,7 +66,7 @@ def main():
     train_data, val_data, test_data = get_data_splits(full_dataset)
 
 
-    model = DenoiseModel(train_data, val_data, batch_size=4)
+    model = DenoiseModel(train_data, val_data, batch_size=args.b)
 
     model.train()
 
