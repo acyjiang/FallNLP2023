@@ -31,6 +31,7 @@ def generate_summary(batch):
 results = test_data.map(generate_summary, batched=True, batch_size=16, remove_columns=["article"])
 results_noisy = test_data_noisy.map(generate_summary, batched=True, batch_size=16, remove_columns=["article"])
 
-print(results[:]["pred_summary"])
-print(results[:]["highlights"])
-print(results_noisy[:]["pred_summary"])
+with open("summaries.txt", "w") as f:
+    f.write(results[:]["highlights"])
+    f.write(results[:]["pred_summary"])
+    f.write(results_noisy[:]["pred_summary"])
